@@ -1,0 +1,158 @@
+﻿
+@{
+    ViewBag.Title = "MantenedorLicencias_Usuario";
+}
+
+<h2>MantenedorLicencias_Usuario</h2>
+
+<a class="btn btn-primary" style="margin-bottom:10px" onclick="PopupForm('@Url.Action("AnadirLic","Licencia")')">Añadir nueva licencia</a>
+
+<table id="tablaLicencia" class="table table-striped table-bordered dt-responsive" style="width:100%">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>RUT</th>
+            <th>NOMBRE</th>
+            <th>TIPO LICENCIA</th>
+            <th>TIPO INCIDENCIA</th>
+            <th>FECHA EMISION</th>
+            <th>FECHA INICIO</th>
+            <th>FECHA FIN</th>
+            <th>DIAS</th>
+            <th>VP</th>
+            <th>AREA</th>
+            <th>SUCURSAL</th>
+            <th>FECHA SUBIDO</th>
+            <th></th>
+        </tr>
+    </thead>
+</table>
+
+@section scripts{
+    <script src="~/Scripts/DataTables/media/js/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/DataTables/media/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        var Popup, dataTable;
+
+        $(document).ready(function () {
+            $("#tablaLicencia").DataTable({
+                "ajax": {
+                    "url": "/Licencia/GetData",
+                    "type": "GET",
+                    "datatype": "json",
+                    "searchable": false
+                },
+                "columns": [
+                    { "data": "idLicencia"},
+                    { "data": "rutColaborador" },
+                    { "data": "nom_col" },
+                    { "data": "tipoLicencia" },
+                    { "data": "tipoIncidencia" },
+                    { "data": "fechaEmision"},
+                    { "data": "fechaInicio" },
+                    { "data": "fechaFin" },
+                    { "data": "diasLicencia" },
+                    { "data": "VP" },
+                    { "data": "AREA" },
+                    { "data": "usuarioCarga" },
+                    { "data": "usuarioSubida" },
+                    {
+                        "data": "idLicencia", "render": function(data){
+                            return "<a class= 'btn btn-danger btn-sm' onclick=ModificarLic(" + data + ")> <span class='glyphicon glyphicon - trash'></span>Eliminar</a>"
+                        },
+                        "orderable": false,
+                    }
+                ],
+                "language": {
+                    "emptyTable" : "Tabla sin datos, por favor agregue una licencia.",
+                },
+            });
+        });
+
+        function PopupForm(url) {
+            var formDiv = $('<div/>');
+            $.get(url)
+                .done(function (response) {
+                    formDiv.html(response);
+
+                    Popup = formDiv.dialog({
+                        autoOpen: true,
+                        resizable: true,
+                        title: 'Llenar nuevo reposo',
+                        height: 500,
+                        width: 800,
+                        close: function () {
+                            Popup.dialog('destroy').remove();
+                        }
+
+                    })
+                }
+                    )
+        }
+
+
+        function SubmitForm(form) {
+
+            $.validator.unobtrusive.parse(form);
+
+            var archivo = document.getElementById("FileUpload").Value;
+            form.append("FileUpload", archivo);
+
+            if ($(form).valid()) {
+                $.ajax({
+                    type: "POST",
+                    url: form.action,
+                    //url: '@Url.Action("AnadirLic","Licencia")/'+ id,
+                    data: $(form).serialize(),
+                    success: function (data) {
+                        if (data.success) {
+
+                            Popup.dialog('close');
+                            $('#tablaLicencia').DataTable().ajax.reload()
+
+                            console: log(data.message);
+
+                            //$.notify.defaults(data.message, {
+                            //    globalPosition: "top center",
+                            //    className: "success",
+                            $.notify(data.message, {
+                                globalPosition: "top center",
+                                className: "success"
+                            })
+
+                        }
+                    }
+                });
+            }
+            return false;
+        }
+
+
+        function ModificarLic(id) {
+            if(confirm('Seguro que quieres eliminar el registro?'))
+            {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("ModificarLic","Licencia")/' + id,
+                    success: function (data) {
+                        if (data.success)
+                        {
+                            $('#tablaLicencia').DataTable().ajax.reload()
+
+                            $.notify(data.message, {
+                                globalPosition: "top center",
+                                className: "error",
+                            })
+
+                        }
+                    }
+
+                });
+            }
+        }
+
+        //https://stackoverflow.com/questions/32470906/how-to-upload-a-image-in-asp-net-mvc-using-ajax-request
+
+    </script>
+}
